@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html>
+
+	<head>
+		<title>Camera Viewer</title>
+	</head>
+	
+	<style>
+		html, body
+		{
+			margin: 0;
+			border: 0;
+			overflow: hidden;
+			width: 100vw;
+			height: 100vh;
+			background-color: black;
+			text-align: center;
+		}
+	</style>
+	
+	<body style="text-align:center;" onLoad="load();" onResize="resize();">
+		<video id="stream" autoplay="true" onclick="capture();"></video>
+	</body>
+	
+	<script>
+		function load()
+		{
+			window.onkeydown = onKeyDown;
+			resize();
+			navigator.getUserMedia({video: true}, loadVideo, () => { });
+		}
+		
+		
+		function loadVideo(stream)
+		{
+			var img = document.getElementById("stream");
+
+			//img.src = window.URL.createObjectURL(stream);
+			img.srcObject = stream;
+		}
+		
+			
+		function resize()
+		{
+			var img = document.getElementById("stream");
+			img.width = document.documentElement.clientWidth;
+			img.height = document.documentElement.clientHeight;
+			
+			for (let c of album)
+			{
+				c.style.width = "" + (document.documentElement.clientHeight * (4 / 3)) + "px";
+				c.style.height = "" + (document.documentElement.clientHeight) + "px";
+			}
+		}
+		
+		
+		function onKeyDown(ev)
+		{
+			if (ev.key != "Shift" && ev.key != "F11")
+			{
+				if (ev.key == "ArrowLeft" && album.length > 0)
+				{
+					if (showingAlbum)
+						curAlbum = Math.max(0, curAlbum - 1);
+					
+					showAlbum();
+				}
+				else if (ev.key == "ArrowRight" && album.length > 0)
+				{
+					if (showingAlbum)
+						curAlbum = Math.min(album.length - 1, curAlbum + 1);
+					
+					showAlbum();
+				}
+				else
+				{
+					toggle();
+				}
+			}
+		}
+		
+		
+		var showingAlbum = false;
+		var lastToggle = new Date();
+		var album = [];
+		var curAlbum = 0;
+		
+		
+		function toggle()
+		{
+			if (showingAlbum)
+				resume();
+			else
+				capture();
+		}
+		
+		
+		function capture()
+		{
+			var img = document.getElementById("stream");
+			
+			var c = document.createElement("canvas");
+			c.width = 640 * 2;
+			c.height = 480 * 2;
+			c.style.width = "" + (document.documentElement.clientHeight * (4 / 3)) + "px";
+			c.style.height = "" + (document.documentElement.clientHeight) + "px";
+			
+			var ctx = c.getContext("2d");
+			ctx.fillStyle = "white";
+			ctx.fillRect(0, 0, c.width, c.height);
+			ctx.drawImage(img, 0, 0, c.width, c.height);
+			
+			ctx.strokeStyle = "blue";
+			ctx.lineWidth = 5;
+			ctx.strokeRect(0, 0, c.width, c.height);
+			
+			ctx.fillStyle = "white";
+			ctx.textBaseline = "bottom";
+			ctx.font = "30px Verdana";
+			ctx.fillText((album.length + 1), 5, c.height - 5);
+			
+			document.body.appendChild(c);
+			c.style.margin = "auto";
+			c.style.display = "none";
+			
+			curAlbum = album.length;
+			album.push(c);
+			resize();
+			showAlbum();
+		}
+		
+		
+		function showAlbum()
+		{
+			var img = document.getElementById("stream");
+			img.style.display = "none";
+			
+			for (let c of album)
+				c.style.display = "none";
+			
+			if (album.length > 0)
+				album[curAlbum].style.display = "block";
+			
+			showingAlbum = true;
+		}
+		
+		
+		function resume()
+		{
+			var img = document.getElementById("stream");
+			img.style.display = "block";
+			
+			for (let c of album)
+				c.style.display = "none";
+				
+			showingAlbum = false;
+		}
+	</script>
+
+</html>
